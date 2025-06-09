@@ -20,7 +20,7 @@ export default function SVGWrap({ size = 18, children, type, className, title, o
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        style={{ widows: '100%', height: '100%' }}
+        style={{ width: '100%', height: '100%' }}
         {...props}
       >
         {children}
