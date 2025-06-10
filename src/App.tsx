@@ -6,27 +6,48 @@ import Settings from '~view/Settings';
 import Titlebar from '~view/Titlebar';
 
 const viewMap = {
-  ask: <Ask />,
-  settings: <Settings />,
-  titlebar: <Titlebar />,
+  ask: Ask,
+  settings: Settings,
+  titlebar: Titlebar,
 };
 
 type ViewLabel = keyof typeof viewMap;
 
 export default function App() {
   const [label, setLabel] = useState<ViewLabel>('ask');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const win = WebviewWindow.getByLabel('main') ?? undefined;
-    const resolvedLabel = (win?.label ?? 'ask') as ViewLabel;
+    let resolved: string | undefined;
 
-    if (resolvedLabel in viewMap) {
-      setLabel(resolvedLabel);
+    try {
+      resolved = WebviewWindow.getByLabel('main')?.label;
+    } catch (err) {
+      console.warn('Unable to resolve window label', err);
+    }
+
+    if (resolved && resolved in viewMap) {
+      setLabel(resolved as ViewLabel);
     } else {
-      setLabel('ask'); // fallback
+      if (resolved && !(resolved in viewMap)) {
+        console.warn(`Unknown view label "${resolved}"; falling back to "ask"`);
+      }
+      setLabel('ask');
     }
   }, []);
 
-  // 👇 This is the line you're asking about
-  return viewMap[label] ?? <div>⚠️ Could not load component</div>;
+  const View = viewMap[label];
+
+  if (!View) {
+    return <div>⚠️ Could not load component: {label}</div>;
+  }
+
+  try {
+    return <View />;
+  } catch (err) {
+    console.error('Failed to render component', label, err);
+    setError(`Failed to render ${label} view`);
+  }
+
+  return <div>{error ?? 'Unknown error loading view'}</div>;
 }
